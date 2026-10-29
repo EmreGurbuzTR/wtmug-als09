@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>P2P Sýnýf Ýçi Daðýtým</title>
+<title>P2P SÄ±nÄ±f Ä°Ã§i DaÄŸÄ±tÄ±m</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
@@ -22,20 +22,18 @@
   .role-teacher { background:var(--blue); color:#000; }
   .role-student { background:var(--accent); color:#000; }
 
-  /* QR Ekraný */
+  /* QR EkranÄ± */
   #qrArea { background:white; padding:20px; border-radius:12px; margin-bottom:20px; }
   .instruction { font-size:18px; font-weight:bold; color:var(--blue); margin-bottom:10px; text-align:center; }
   .status-badge { padding:8px 15px; border-radius:20px; background:var(--surface); border:1px solid var(--border); font-size:16px; color:var(--blue); margin-bottom:20px; font-family:monospace; font-weight:bold;}
   
-  /* Öðrenci Manuel Giriþ */
+  /* Ã–ÄŸrenci Manuel GiriÅŸ */
   .manual-connect { width:100%; max-width:350px; margin-top:15px; background:var(--surface); padding:20px; border-radius:10px; border:1px solid var(--border); text-align:center; }
-  .manual-input-group { display:flex; gap:5px; margin-bottom:15px; }
+  .manual-input-group { display:flex; gap:5px; }
   .manual-input-group input { flex:1; padding:12px; border-radius:6px; border:1px solid var(--border); background:#080b13; color:white; text-align:center; font-family:monospace; font-size:14px;}
   .manual-input-group button { padding:12px 15px; border:0; border-radius:6px; background:var(--accent); color:#000; font-weight:bold; cursor:pointer; }
-  
-  .btn-mobile-redirect { display:block; width:100%; padding:12px; border:0; border-radius:6px; background:var(--blue); color:#000; font-weight:bold; cursor:pointer; text-decoration:none; box-sizing:border-box; }
 
-  /* Hoca Gönderim Günlüðü */
+  /* Hoca GÃ¶nderim GÃ¼nlÃ¼ÄŸÃ¼ */
   #teacherLogArea { display:none; width:100%; max-width:400px; margin-top:20px; }
   .log-box { width:100%; background:#080b13; border:1px solid var(--border); border-radius:10px; padding:15px; overflow-y:auto; height:180px; font-family:monospace; font-size:12px; color:var(--muted); text-align:left; }
   .btn-send { flex:1; padding:15px; border:0; border-radius:8px; font-weight:bold; cursor:pointer; background:var(--accent); color:#000; font-size:16px; max-width:300px; }
@@ -47,62 +45,58 @@
 </head>
 <body>
 
-<header>?? Sýnýf Ýçi Daðýtým Sistemi</header>
+<header>?? SÄ±nÄ±f Ä°Ã§i DaÄŸÄ±tÄ±m Sistemi</header>
 
 <div class="container">
-  <!-- 1. ROL SEÇÝM EKRANI -->
+  <!-- 1. ROL SEÃ‡Ä°M EKRANI -->
   <div id="roleScreen">
-    <h2>Lütfen Rolünüzü Seçin</h2>
-    <button class="role-btn role-teacher" onclick="startRole('teacher')">????? Hocayým (Dosya Göndereceðim)</button>
-    <button class="role-btn role-student" onclick="startRole('student')">?? Öðrenciyim (Dosya Alacaðým)</button>
+    <h2>LÃ¼tfen RolÃ¼nÃ¼zÃ¼ SeÃ§in</h2>
+    <button class="role-btn role-teacher" onclick="startRole('teacher')">????? HocayÄ±m (Dosya GÃ¶ndereceÄŸim)</button>
+    <button class="role-btn role-student" onclick="startRole('student')">?? Ã–ÄŸrenciyim (Dosya AlacaÄŸÄ±m)</button>
   </div>
 
-  <!-- 2. HOCA DOSYA SEÇÝM EKRANI -->
+  <!-- 2. HOCA DOSYA SEÃ‡Ä°M EKRANI -->
   <div id="teacherFileSelectScreen">
-    <h2 style="color:var(--blue);">Gönderilecek Dosyayý Seçin</h2>
+    <h2 style="color:var(--blue);">GÃ¶nderilecek DosyayÄ± SeÃ§in</h2>
     <p style="font-size:14px; color:var(--muted); text-align:center; margin-bottom:20px;">
-      Dosyayý seçtikten sonra QR kod ekrana gelecek.<br>Öðrenciler baðlandýðý anda dosya otomatik gönderilecek.
+      DosyayÄ± seÃ§tikten sonra QR kod ekrana gelecek.<br>Ã–ÄŸrenciler baÄŸlandÄ±ÄŸÄ± anda dosya otomatik gÃ¶nderilecek.
     </p>
     <input type="file" id="teacherInitialFile" style="display:none" onchange="prepareTeacherFile(this)">
-    <button class="btn-send" onclick="document.getElementById('teacherInitialFile').click()">?? Dosya Seç</button>
+    <button class="btn-send" onclick="document.getElementById('teacherInitialFile').click()">?? Dosya SeÃ§</button>
   </div>
 
-  <!-- 3. QR / BAÐLANTI EKRANI -->
+  <!-- 3. QR / BAÄžLANTI EKRANI -->
   <div id="qrScreen">
-    <!-- Hoca Ýçin: QR ve ID -->
-    <div class="instruction" id="qrMainInstruction">QR Kod Yükleniyor...</div>
-    <div class="status-badge" id="pcStatus">Sunucuya Baðlanýlýyor...</div>
-    <div id="qrArea">QR Yükleniyor...</div>
+    <!-- Hoca Ä°Ã§in: QR ve ID -->
+    <div class="instruction" id="qrMainInstruction">QR Kod YÃ¼kleniyor...</div>
+    <div class="status-badge" id="pcStatus">Sunucuya BaÄŸlanÄ±lÄ±yor...</div>
+    <div id="qrArea">QR YÃ¼kleniyor...</div>
     
     <p id="teacherInstruction" style="font-size:13px; color:var(--muted); text-align:center; max-width:350px; display:none;">
-      <b>Dosya Hazýr!</b><br>Öðrenciler bu koda veya ID'ye baðlanabilir.<br><span style="color:var(--accent);">Kod ekranda kaldýðý sürece yeni öðrenciler baðlanmaya devam edebilir.</span>
+      <b>Dosya HazÄ±r!</b><br>Ã–ÄŸrenciler bu koda veya ID'ye baÄŸlanabilir.<br><span style="color:var(--accent);">Kod ekranda kaldÄ±ÄŸÄ± sÃ¼rece yeni Ã¶ÄŸrenciler baÄŸlanmaya devam edebilir.</span>
     </p>
 
-    <!-- Hoca Ýçin: Gönderim Günlüðü (Baðlantýlar geldikçe burada liste þeklinde gösterilir) -->
+    <!-- Hoca Ä°Ã§in: GÃ¶nderim GÃ¼nlÃ¼ÄŸÃ¼ -->
     <div id="teacherLogArea">
-      <div class="log-box" id="teacherLog">Öðrenci bekleniyor...</div>
+      <div class="log-box" id="teacherLog">Ã–ÄŸrenci bekleniyor...</div>
     </div>
 
-    <!-- Öðrenci Ýçin: Manuel Giriþ ve Telefon Yönlendirmesi -->
+    <!-- Ã–ÄŸrenci Ä°Ã§in: Sadece Manuel GiriÅŸ -->
     <div class="manual-connect" id="manualConnectArea" style="display:none;">
-      <h2 style="color:var(--accent); margin-top:0;">Hocaya Baðlan</h2>
-      <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">Hocanýn ekranýnda yazan ID'yi buraya girin.</p>
+      <h2 style="color:var(--accent); margin-top:0;">Hocaya BaÄŸlan</h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">HocanÄ±n ekranÄ±nda yazan ID'yi buraya girin.</p>
       
       <div class="manual-input-group">
-        <input type="text" id="teacherIdInput" placeholder="Hoca ID (Örn: 684fdccb...)">
-        <button onclick="connectDirectlyToTeacher()">Baðlan</button>
+        <input type="text" id="teacherIdInput" placeholder="Hoca ID (Ã–rn: 684fdccb...)">
+        <button onclick="connectDirectlyToTeacher()">BaÄŸlan</button>
       </div>
-      
-      <hr style="border-color:var(--border); margin:15px 0;">
-      <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Telefonunuzdan mý baðlanmak istiyorsunuz?</p>
-      <a href="mobile.html" class="btn-mobile-redirect">?? Telefonla QR Okut</a>
     </div>
   </div>
 
-  <!-- 4. ÖÐRENCÝ TRANSFER EKRANI -->
+  <!-- 4. Ã–ÄžRENCÄ° TRANSFER EKRANI -->
   <div id="studentTransferScreen">
-    <h2 style="color:var(--accent);">Öðrenci Bilgisayarý</h2>
-    <div class="incoming-info" id="studentStatus">Hocaya baðlanýldý! Dosya bekleniyor...</div>
+    <h2 style="color:var(--accent);">Ã–ÄŸrenci BilgisayarÄ±</h2>
+    <div class="incoming-info" id="studentStatus">Hocaya baÄŸlanÄ±ldÄ±! Dosya bekleniyor...</div>
     <div id="downloadArea"></div>
     <div class="progress-bar" id="studentProgress" style="display:none;"><div id="studentProgressFill"></div></div>
   </div>
@@ -121,9 +115,9 @@ function startRole(role) {
   
   if (role === 'teacher') {
     document.getElementById('teacherFileSelectScreen').style.display = 'flex';
-    document.getElementById('qrScreen').style.display = 'none'; // Dosya seçene kadar gizle
+    document.getElementById('qrScreen').style.display = 'none'; 
   } else {
-    // Öðrenci Bilgisayarý Arayüzü
+    // Ã–ÄŸrenci BilgisayarÄ± ArayÃ¼zÃ¼: Sadece ID GiriÅŸi
     document.getElementById('qrMainInstruction').style.display = 'none';
     document.getElementById('pcStatus').style.display = 'none';
     document.getElementById('qrArea').style.display = 'none';
@@ -134,7 +128,7 @@ function startRole(role) {
   }
 }
 
-// HOCA: Dosya seçildiðinde
+// HOCA: Dosya seÃ§ildiÄŸinde
 function prepareTeacherFile(input) {
   const file = input.files[0];
   if (!file) return;
@@ -143,45 +137,44 @@ function prepareTeacherFile(input) {
   document.getElementById('teacherFileSelectScreen').style.display = 'none';
   document.getElementById('qrScreen').style.display = 'flex';
   
-  // Hoca için QR alanlarýný ve günlüðü görünür yap
+  // Hoca iÃ§in QR alanlarÄ±nÄ± ve gÃ¼nlÃ¼ÄŸÃ¼ gÃ¶rÃ¼nÃ¼r yap
   document.getElementById('qrMainInstruction').style.display = 'block';
   document.getElementById('pcStatus').style.display = 'inline-block';
   document.getElementById('qrArea').style.display = 'block';
   document.getElementById('teacherInstruction').style.display = 'block';
-  document.getElementById('teacherLogArea').style.display = 'block'; // Günlüðü aç
+  document.getElementById('teacherLogArea').style.display = 'block'; 
   document.getElementById('manualConnectArea').style.display = 'none';
   
   initTeacherPeer();
 }
 
-// HOCA: Peer Baþlatma
+// HOCA: Peer BaÅŸlatma
 function initTeacherPeer() {
   peer = new Peer();
   
   peer.on('open', (id) => {
-    document.getElementById('pcStatus').innerText = "Hazýr (ID: " + id + ")";
+    document.getElementById('pcStatus').innerText = "HazÄ±r (ID: " + id + ")";
     const qr = qrcode(0, 'M');
     qr.addData(id);
     qr.make();
     document.getElementById('qrArea').innerHTML = qr.createImgTag(6, 0);
   });
 
-  // Hoca gelen TÜM baðlantýlarý kabul eder, QR ekranýný KAPATMAZ.
+  // Hoca gelen TÃœM baÄŸlantÄ±larÄ± kabul eder, QR ekranÄ±nÄ± KAPATMAZ.
   peer.on('connection', (conn) => {
     conn.on('open', () => {
-      // Baðlanan öðrencinin ID'sinin ilk 4 karakterini alalým (Günlükte ayýrt etmek için)
       const studentId = conn.peer.substring(0, 4).toUpperCase();
       
-      logTeacher(`[${studentId}] Yeni öðrenci baðlandý. Gönderim baþlýyor...`);
-      sendFileToStudent(conn, teacherFileToSend, studentId); // Dosyayý bu baðlantýya özel gönder
+      logTeacher(`[${studentId}] Yeni Ã¶ÄŸrenci baÄŸlandÄ±. GÃ¶nderim baÅŸlÄ±yor...`);
+      sendFileToStudent(conn, teacherFileToSend, studentId); 
     });
   });
 }
 
-// ÖÐRENCÝ: Manuel ID ile Hocaya Baðlanma
+// Ã–ÄžRENCÄ°: Manuel ID ile Hocaya BaÄŸlanma
 function connectDirectlyToTeacher() {
   const teacherId = document.getElementById('teacherIdInput').value.trim();
-  if (!teacherId) return alert("Lütfen Hocanýn ID'sini girin.");
+  if (!teacherId) return alert("LÃ¼tfen HocanÄ±n ID'sini girin.");
   
   if (!peer) {
     peer = new Peer();
@@ -199,7 +192,7 @@ function connectDirectlyToTeacher() {
   }
 }
 
-// HOCA: Belirli bir öðrenciye dosya gönderme
+// HOCA: Belirli bir Ã¶ÄŸrenciye dosya gÃ¶nderme
 function sendFileToStudent(conn, file, studentId) {
   if (!file) return;
   const CHUNK_SIZE = 16 * 1024;
@@ -208,13 +201,11 @@ function sendFileToStudent(conn, file, studentId) {
   let offset = 0;
   let chunkIndex = 0;
 
-  // Gönderime baþla
   conn.send({ type: 'file-start', name: file.name, size: file.size, mime: file.type, chunks: totalChunks });
 
   function readNext() {
-    // Eðer öðrenci baðlantýyý kopardýysa iþlemi durdur
     if (!conn.open) {
-       logTeacher(`[${studentId}] Baðlantý koptu, gönderim iptal edildi.`);
+       logTeacher(`[${studentId}] BaÄŸlantÄ± koptu, gÃ¶nderim iptal edildi.`);
        return;
     }
     const slice = file.slice(offset, offset + CHUNK_SIZE);
@@ -227,16 +218,14 @@ function sendFileToStudent(conn, file, studentId) {
     chunkIndex++;
     
     let percent = Math.round((chunkIndex / totalChunks) * 100);
-    // Her %25'te bir günlüðe yaz
     if(percent === 25 || percent === 50 || percent === 75) {
-        logTeacher(`[${studentId}] Gönderim: %${percent}`);
+        logTeacher(`[${studentId}] GÃ¶nderim: %${percent}`);
     }
 
     if (offset < file.size) {
-        // Tarayýcýnýn donmamasý için çok küçük bir gecikme ekleyelim
         setTimeout(readNext, 10); 
     } else {
-        logTeacher(`? [${studentId}] Gönderim tamamlandý.`);
+        logTeacher(`? [${studentId}] GÃ¶nderim tamamlandÄ±.`);
     }
   };
   readNext();
@@ -244,11 +233,10 @@ function sendFileToStudent(conn, file, studentId) {
 
 function logTeacher(msg) {
   const log = document.getElementById('teacherLog');
-  // Baþa yeni mesaj ekle (en son olay en üstte görünsün)
   log.innerHTML = `> ${msg}<br>` + log.innerHTML;
 }
 
-// ÖÐRENCÝ: Dosya Alma
+// Ã–ÄžRENCÄ°: Dosya Alma
 let incomingFile = null;
 let receivedChunks = [];
 
@@ -257,7 +245,7 @@ function handleIncomingData(data) {
     incomingFile = { name: data.name, size: data.size, mime: data.mime, chunks: data.chunks };
     receivedChunks = [];
     document.getElementById('studentProgress').style.display = 'block';
-    document.getElementById('downloadArea').innerHTML = `<p>Alýnýyor: ${data.name}</p>`;
+    document.getElementById('downloadArea').innerHTML = `<p>AlÄ±nÄ±yor: ${data.name}</p>`;
   } 
   else if (data.type === 'file-chunk') {
     receivedChunks.push(data.data);
@@ -268,15 +256,15 @@ function handleIncomingData(data) {
       const blob = new Blob(receivedChunks, { type: incomingFile.mime });
       const url = URL.createObjectURL(blob);
       
-      let html = `<h3 style="color:var(--accent);">Transfer Baþarýlý!</h3>`;
+      let html = `<h3 style="color:var(--accent);">Transfer BaÅŸarÄ±lÄ±!</h3>`;
       if (incomingFile.mime && incomingFile.mime.startsWith('image/')) {
         html += `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:10px;"><br>`;
       }
-      html += `<a href="${url}" download="${incomingFile.name}" style="display:inline-block; padding:10px 20px; background:var(--blue); color:#000; text-decoration:none; border-radius:8px; font-weight:bold;">Dosyayý Ýndir</a>`;
+      html += `<a href="${url}" download="${incomingFile.name}" style="display:inline-block; padding:10px 20px; background:var(--blue); color:#000; text-decoration:none; border-radius:8px; font-weight:bold;">DosyayÄ± Ä°ndir</a>`;
       
       document.getElementById('downloadArea').innerHTML = html;
       document.getElementById('studentProgress').style.display = 'none';
-      document.getElementById('studentStatus').innerText = "Dosya Alýndý.";
+      document.getElementById('studentStatus').innerText = "Dosya AlÄ±ndÄ±.";
     }
   }
 }
