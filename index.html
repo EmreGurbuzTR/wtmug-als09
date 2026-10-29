@@ -7,6 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <style>
   :root { --bg:#0b1220; --surface:#151d2f; --border:#2a3448; --text:#e7ecf5; --muted:#8f9bb3; --accent:#4ade80; --blue:#60a5fa; --danger:#f87171; }
   body { margin:0; background:var(--bg); color:var(--text); font-family:sans-serif; display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
@@ -29,10 +30,16 @@
   
   /* Öğrenci Manuel Giriş */
   .manual-connect { width:100%; max-width:350px; margin-top:15px; background:var(--surface); padding:20px; border-radius:10px; border:1px solid var(--border); text-align:center; }
-  .manual-input-group { display:flex; gap:5px; }
+  .manual-input-group { display:flex; gap:5px; margin-bottom:15px; }
   .manual-input-group input { flex:1; padding:12px; border-radius:6px; border:1px solid var(--border); background:#080b13; color:white; text-align:center; font-family:monospace; font-size:14px;}
   .manual-input-group button { padding:12px 15px; border:0; border-radius:6px; background:var(--accent); color:#000; font-weight:bold; cursor:pointer; }
-
+  
+  /* Mobil Kamera Butonu ve Videosu */
+  #mobileScannerArea { display:none; margin-top:15px; padding-top:15px; border-top:1px dashed var(--border); }
+  .btn-camera-open { width:100%; padding:12px; border:0; border-radius:6px; background:var(--blue); color:#000; font-weight:bold; cursor:pointer; font-size:15px; }
+  #scannerContainer { display:none; margin-top:15px; position:relative; width:100%; aspect-ratio:1/1; border-radius:10px; overflow:hidden; border:2px solid var(--border); }
+  #scannerVideo { width:100%; height:100%; object-fit:cover; }
+  
   /* Hoca Gönderim Günlüğü */
   #teacherLogArea { display:none; width:100%; max-width:400px; margin-top:20px; }
   .log-box { width:100%; background:#080b13; border:1px solid var(--border); border-radius:10px; padding:15px; overflow-y:auto; height:180px; font-family:monospace; font-size:12px; color:var(--muted); text-align:left; }
@@ -45,14 +52,14 @@
 </head>
 <body>
 
-<header>?? Sınıf İçi Dağıtım Sistemi</header>
+<header>💻 Sınıf İçi Dağıtım Sistemi</header>
 
 <div class="container">
   <!-- 1. ROL SEÇİM EKRANI -->
   <div id="roleScreen">
     <h2>Lütfen Rolünüzü Seçin</h2>
-    <button class="role-btn role-teacher" onclick="startRole('teacher')">????? Hocayım (Dosya Göndereceğim)</button>
-    <button class="role-btn role-student" onclick="startRole('student')">?? Öğrenciyim (Dosya Alacağım)</button>
+    <button class="role-btn role-teacher" onclick="startRole('teacher')">👨‍🏫 Hocayım (Dosya Göndereceğim)</button>
+    <button class="role-btn role-student" onclick="startRole('student')">🎓 Öğrenciyim (Dosya Alacağım)</button>
   </div>
 
   <!-- 2. HOCA DOSYA SEÇİM EKRANI -->
@@ -62,7 +69,7 @@
       Dosyayı seçtikten sonra QR kod ekrana gelecek.<br>Öğrenciler bağlandığı anda dosya otomatik gönderilecek.
     </p>
     <input type="file" id="teacherInitialFile" style="display:none" onchange="prepareTeacherFile(this)">
-    <button class="btn-send" onclick="document.getElementById('teacherInitialFile').click()">?? Dosya Seç</button>
+    <button class="btn-send" onclick="document.getElementById('teacherInitialFile').click()">📁 Dosya Seç</button>
   </div>
 
   <!-- 3. QR / BAĞLANTI EKRANI -->
@@ -76,19 +83,28 @@
       <b>Dosya Hazır!</b><br>Öğrenciler bu koda veya ID'ye bağlanabilir.<br><span style="color:var(--accent);">Kod ekranda kaldığı sürece yeni öğrenciler bağlanmaya devam edebilir.</span>
     </p>
 
-    <!-- Hoca İçin: Gönderim Günlüğü -->
     <div id="teacherLogArea">
       <div class="log-box" id="teacherLog">Öğrenci bekleniyor...</div>
     </div>
 
-    <!-- Öğrenci İçin: Sadece Manuel Giriş -->
+    <!-- Öğrenci İçin: Manuel Giriş ve Mobil Kamera -->
     <div class="manual-connect" id="manualConnectArea" style="display:none;">
       <h2 style="color:var(--accent); margin-top:0;">Hocaya Bağlan</h2>
-      <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">Hocanın ekranında yazan ID'yi buraya girin.</p>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">Hocanın ekranında yazan ID'yi girin.</p>
       
       <div class="manual-input-group">
         <input type="text" id="teacherIdInput" placeholder="Hoca ID (Örn: 684fdccb...)">
         <button onclick="connectDirectlyToTeacher()">Bağlan</button>
+      </div>
+
+      <!-- Sadece mobilde görünecek olan kamera alanı -->
+      <div id="mobileScannerArea">
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">- VEYA -</p>
+        <button class="btn-camera-open" onclick="startScanner()">📷 Kamera ile QR Okut</button>
+        
+        <div id="scannerContainer">
+          <video id="scannerVideo" playsinline autoplay muted></video>
+        </div>
       </div>
     </div>
   </div>
@@ -107,6 +123,8 @@ let peer = null;
 let currentRole = null;
 let activeConn = null; 
 let teacherFileToSend = null; 
+let scannerActive = false;
+let videoStream = null;
 
 function startRole(role) {
   currentRole = role;
@@ -117,7 +135,7 @@ function startRole(role) {
     document.getElementById('teacherFileSelectScreen').style.display = 'flex';
     document.getElementById('qrScreen').style.display = 'none'; 
   } else {
-    // Öğrenci Bilgisayarı Arayüzü: Sadece ID Girişi
+    // Öğrenci Arayüzü
     document.getElementById('qrMainInstruction').style.display = 'none';
     document.getElementById('pcStatus').style.display = 'none';
     document.getElementById('qrArea').style.display = 'none';
@@ -125,6 +143,12 @@ function startRole(role) {
     document.getElementById('teacherLogArea').style.display = 'none';
     
     document.getElementById('manualConnectArea').style.display = 'block';
+
+    // Mobil cihaz kontrolü (Kamera butonunu göstermek için)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      document.getElementById('mobileScannerArea').style.display = 'block';
+    }
   }
 }
 
@@ -137,7 +161,6 @@ function prepareTeacherFile(input) {
   document.getElementById('teacherFileSelectScreen').style.display = 'none';
   document.getElementById('qrScreen').style.display = 'flex';
   
-  // Hoca için QR alanlarını ve günlüğü görünür yap
   document.getElementById('qrMainInstruction').style.display = 'block';
   document.getElementById('pcStatus').style.display = 'inline-block';
   document.getElementById('qrArea').style.display = 'block';
@@ -160,11 +183,9 @@ function initTeacherPeer() {
     document.getElementById('qrArea').innerHTML = qr.createImgTag(6, 0);
   });
 
-  // Hoca gelen TÜM bağlantıları kabul eder, QR ekranını KAPATMAZ.
   peer.on('connection', (conn) => {
     conn.on('open', () => {
       const studentId = conn.peer.substring(0, 4).toUpperCase();
-      
       logTeacher(`[${studentId}] Yeni öğrenci bağlandı. Gönderim başlıyor...`);
       sendFileToStudent(conn, teacherFileToSend, studentId); 
     });
@@ -190,6 +211,54 @@ function connectDirectlyToTeacher() {
       conn.on('data', (data) => handleIncomingData(data));
     });
   }
+}
+
+// ÖĞRENCİ: Mobil Kamera ile QR Okuma
+async function startScanner() {
+  const scannerContainer = document.getElementById('scannerContainer');
+  const video = document.getElementById('scannerVideo');
+  
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = videoStream;
+    video.setAttribute('playsinline', true);
+    video.play();
+    
+    scannerContainer.style.display = 'block';
+    scannerActive = true;
+    requestAnimationFrame(tick);
+  } catch (err) {
+    alert("Kamera açılamadı: " + err.message);
+  }
+}
+
+function tick() {
+  if (!scannerActive) return;
+  const video = document.getElementById('scannerVideo');
+  
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    
+    if (code) {
+      // QR bulundu!
+      scannerActive = false;
+      if (videoStream) videoStream.getTracks().forEach(t => t.stop()); // Kamerayı kapat
+      document.getElementById('scannerContainer').style.display = 'none';
+      document.getElementById('mobileScannerArea').style.display = 'none';
+      
+      // ID kutusuna bulunan ID'yi yaz ve bağlan
+      document.getElementById('teacherIdInput').value = code.data;
+      connectDirectlyToTeacher();
+      return;
+    }
+  }
+  requestAnimationFrame(tick);
 }
 
 // HOCA: Belirli bir öğrenciye dosya gönderme
@@ -225,7 +294,7 @@ function sendFileToStudent(conn, file, studentId) {
     if (offset < file.size) {
         setTimeout(readNext, 10); 
     } else {
-        logTeacher(`? [${studentId}] Gönderim tamamlandı.`);
+        logTeacher(`✅ [${studentId}] Gönderim tamamlandı.`);
     }
   };
   readNext();
